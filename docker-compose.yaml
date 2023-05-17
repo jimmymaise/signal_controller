@@ -3,9 +3,10 @@ version: '3'
 services:
   web:
     build: .
-    command: poetry run python manage.py runserver 0.0.0.0:8000
+    command: poetry run gunicorn app.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - .:/app
+      - static_volume:/src/staticfiles
+      - media_volume:/src/mediafiles
     ports:
       - "8000:8000"
     networks:
@@ -22,7 +23,7 @@ services:
   db:
     image: postgres
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
     networks:
@@ -31,7 +32,23 @@ services:
       - POSTGRES_DB=myproject_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=myproject_password181
+  nginx:
+    build: ./nginx
+    volumes:
+      - static_volume:/src/staticfiles
+      - media_volume:/src/mediafiles
+    ports:
+      - "1337:80"
+    depends_on:
+      - web
+    networks:
+      - webservice
 
 networks:
   # The presence of these objects is sufficient to define them
-  webservice: {}
+  webservice: { }
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

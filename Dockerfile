@@ -45,6 +45,8 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_ENVIRONMENT=production
 
+
+
 # Collect static files
 RUN poetry run python manage.py collectstatic --no-input
 
