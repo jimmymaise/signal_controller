@@ -11,7 +11,7 @@ router.register(r'master_traders', views.MasterTraderViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('master_traders1/<str:source>/<str:external_trader_id>/', views.MasterTraderRetrieveView.as_view(),
+    path('master_traders/<str:source>/<str:external_trader_id>/', views.MasterTraderRetrieveView.as_view(),
          name='master_trader_retrieve'),
 
 ]
