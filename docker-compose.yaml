@@ -12,7 +12,7 @@ services:
       - webservice
     environment:
       - DJANGO_ENVIRONMENT=development
-      - DB_PASSWORD=myproject_password
+      - DB_PASSWORD=myproject_password181
       - DB_NAME=myproject_db
       - DB_USER =myproject_user
       - DB_HOST=db
@@ -30,7 +30,7 @@ services:
     environment:
       - POSTGRES_DB=myproject_db
       - POSTGRES_USER=myproject_user
-      - POSTGRES_PASSWORD=myproject_password
+      - POSTGRES_PASSWORD=myproject_password181
 
 networks:
   # The presence of these objects is sufficient to define them
