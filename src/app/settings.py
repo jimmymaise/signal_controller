@@ -73,16 +73,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "app.wsgi.application"
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
@@ -122,7 +112,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-DB_HOST = os.getenv("DB_HOST", "http://localhost:8000")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "myproject_password181")
 DB_NAME = os.getenv("DB_NAME", "myproject_db")
 DB_USER = os.getenv("DB_USER", "myproject_user")
