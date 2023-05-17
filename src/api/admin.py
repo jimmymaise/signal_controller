@@ -122,8 +122,10 @@ class CrawlerTypeAdmin(admin.ModelAdmin):
         """
         Given a model instance save it to the database.
         """
-        _save_model(request, obj, form, change)
-
+        if change:
+            _save_model(request, obj, form, change)
+        else:
+            super().save_model(request, obj, form, change)
 
 class CrawlAssignmentAdmin(admin.ModelAdmin):
     list_display = (
@@ -144,7 +146,10 @@ class CrawlAssignmentAdmin(admin.ModelAdmin):
         """
         Given a model instance save it to the database.
         """
-        _save_model(request, obj, form, change)
+        if change:
+            _save_model(request, obj, form, change)
+        else:
+            super().save_model(request, obj, form, change)
 
 
 # Register your models here.

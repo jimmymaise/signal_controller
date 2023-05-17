@@ -3,11 +3,13 @@ version: '3'
 services:
   web:
     build: .
-    command: poetry run gunicorn --bind 0.0.0.0:8000 myproject.wsgi:application
+    # command: poetry run gunicorn --bind 0.0.0.0:8000 src.wsgi:application
     volumes:
       - .:/app
     ports:
       - "8000:8000"
+    networks:
+      - webservice
     environment:
       - DJANGO_ENVIRONMENT=development
       - POSTGRES_DB=myproject_db
@@ -17,7 +19,17 @@ services:
       - db
   db:
     image: postgres
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - webservice
     environment:
       - POSTGRES_DB=myproject_db
       - POSTGRES_USER=myproject_user
       - POSTGRES_PASSWORD=myproject_password
+
+networks:
+  # The presence of these objects is sufficient to define them
+  webservice: {}
