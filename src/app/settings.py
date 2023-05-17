@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_admin_listfilter_dropdown",
     "django.contrib.admin",
+    
 ]
 
 MIDDLEWARE = [
@@ -53,7 +54,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "app.urls"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
+USE_X_FORWARDED_HOST = True
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -118,7 +119,8 @@ DB_NAME = os.getenv("DB_NAME", "myproject_db")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", 5432)
-
+ALLOWED_HOSTS = ["localhost"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
