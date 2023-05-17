@@ -75,9 +75,11 @@ def balance_runner_assignment():
     ).update(crawl_runner=None)
 
     # Get all active crawl_runners
-    active_crawl_runners = CrawlRunner.objects.filter(is_active=True).prefetch_related(
+    active_crawl_runners = CrawlRunner.objects.filter(is_active=True).annotate(
+        num_assignments=Count("assignments")
+    ).prefetch_related(
         "assignments"
-    )
+    ).order_by("num_assignments")
 
     # Get the total number of active crawl_runners and active master_traders
     total_active_crawl_runners = active_crawl_runners.values_list('id', flat=True).count()
@@ -91,30 +93,20 @@ def balance_runner_assignment():
     # Calculate the number of remaining master_traders that need to be assigned to crawl_runners
     remaining_master_traders = total_active_master_traders % total_active_crawl_runners
 
-    # Get the crawl_runners and the number of master_traders they are currently supporting
-    crawl_runners = active_crawl_runners.annotate(
-        num_crawled_master_trader=Count("assignments")
-    )
-
-    # Sort the crawl_runners by the number of master_traders they are supporting
-    crawl_runners = sorted(crawl_runners, key=lambda s: s.num_crawled_master_trader)
-
     # Reassign master_traders to balance the workload among all crawl_runners
-    for crawl_runner in crawl_runners:
+    for crawl_runner in active_crawl_runners:
         # Calculate the number of additional master_traders that need to be assigned to this crawl_runner
         additional_master_traders = (
-                avg_master_traders_per_crawl_runner - crawl_runner.num_crawled_master_trader
+                avg_master_traders_per_crawl_runner - crawl_runner.num_assignments
         )
         if remaining_master_traders > 0:
             additional_master_traders += 1
             remaining_master_traders -= 1
 
         if additional_master_traders < 0:
-            master_traders_to_unassign = crawl_runner.crawl_assignment.all()[
-                                         : abs(additional_master_traders)
-                                         ]
-            for assignment in master_traders_to_unassign:
-                assignment.delete()
+            master_traders_to_unassigned = crawl_runner.crawl_assignment.all()[: abs(additional_master_traders)]
+            assignments_to_delete = list(master_traders_to_unassigned.values_list('id', flat=True))
+            CrawlAssignment.objects.filter(id__in=assignments_to_delete).bulk_delete()
 
         # Assign additional master_traders to this crawl_runner
         if additional_master_traders > 0:
