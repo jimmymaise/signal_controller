@@ -119,8 +119,8 @@ DB_NAME = os.getenv("DB_NAME", "myproject_db")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", 5432)
-# ALLOWED_HOSTS = ["localhost"]
-# CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(" ")
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
