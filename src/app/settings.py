@@ -24,7 +24,7 @@ SECRET_KEY = "django-insecure-gk$kdlao#eu1eqjl_d0vhk9hsv+_!zk=&8bl*7r-^int0prq@v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -122,14 +122,20 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+DB_HOST = os.getenv("DB_HOST", "http://localhost:8000")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "myproject_password")
+DB_NAME = os.getenv("DB_NAME", "myproject_db")
+DB_USER = os.getenv("DB_USER", "myproject_user")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", 5432)
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "myproject_db",
-        "USER": "myproject_user",
-        "PASSWORD": "myproject_password",
-        "HOST": "db",
-        "PORT": "5432",
+        "NAME": DB_NAME,
+        "USER": DB_USER,
+        "PASSWORD": DB_PASSWORD,
+        "HOST": DB_HOST,
+        "PORT": DB_PORT,
     }
 }

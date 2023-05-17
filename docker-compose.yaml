@@ -12,9 +12,11 @@ services:
       - webservice
     environment:
       - DJANGO_ENVIRONMENT=development
-      - POSTGRES_DB=myproject_db
-      - POSTGRES_USER=myproject_user
-      - POSTGRES_PASSWORD=myproject_password
+      - DB_PASSWORD=myproject_password
+      - DB_NAME=myproject_db
+      - DB_USER =myproject_user
+      - DB_HOST=db
+      - DB_PORT= 5432
     depends_on:
       - db
   db:
