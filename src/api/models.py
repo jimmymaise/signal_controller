@@ -112,6 +112,7 @@ class CrawlRunner(models.Model):
     name = models.CharField(max_length=255, unique=True)
     crawler_type = models.ForeignKey(CrawlerType, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
+    last_seen_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

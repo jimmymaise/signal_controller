@@ -7,8 +7,6 @@ from django_admin_listfilter_dropdown.filters import (
 )
 
 
-
-
 def _save_model(request, obj, form, change):
     update_fields = set()
     if change:
@@ -82,6 +80,7 @@ class CrawlRunnerAdmin(admin.ModelAdmin):
         "is_active",
         "updated_at",
         "created_at",
+        "last_seen_at",
     )
     list_filter = (
         ("name", DropdownFilter),
@@ -89,6 +88,8 @@ class CrawlRunnerAdmin(admin.ModelAdmin):
         "is_active",
         "updated_at",
         "created_at",
+        "last_seen_at",
+
     )
 
     def save_model(self, request, obj, form, change):
@@ -126,6 +127,7 @@ class CrawlerTypeAdmin(admin.ModelAdmin):
             _save_model(request, obj, form, change)
         else:
             super().save_model(request, obj, form, change)
+
 
 class CrawlAssignmentAdmin(admin.ModelAdmin):
     list_display = (

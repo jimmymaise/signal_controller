@@ -1,11 +1,13 @@
 # Create your views here.
 # views.py
+import datetime
+
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import generics
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
-
 
 from .models import MasterTrader, Signal, CrawlRunner, CrawlAssignment, CrawlerType
 from .serializers import (
@@ -76,6 +78,7 @@ class CrawlRunnerViewSet(viewsets.ModelViewSet):
             for k, v in request.data.items()
             if k in CrawlRunnerSerializer.Meta.fields
         }
+        filtered_data['last_seen_at'] = datetime.datetime.now(tz=timezone.utc)
         filtered_data['crawler_type_id'] = filtered_data.pop('crawler_type')
         if "assignments" in filtered_data:
             filtered_data.pop("assignments")
