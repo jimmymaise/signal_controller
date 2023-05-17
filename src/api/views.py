@@ -7,8 +7,8 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from . import models, serializers
-from .models import MasterTrader
-from .serializers import MasterTraderSerializer
+from .models import MasterTrader, Signal
+from .serializers import MasterTraderSerializer, SignalSerializer
 
 
 class MultipleFieldLookupORMixin(object):
@@ -39,6 +39,7 @@ class MasterTraderViewSet(viewsets.ModelViewSet):
         filtered_data = {k: v for k, v in request.data.items() if k in MasterTraderSerializer.Meta.fields}
 
         # Use the filtered data to update or create the MasterTrader instance
+        signals = filtered_data.pop('signals')
         master_trader, created = MasterTrader.objects.update_or_create(
             external_trader_id=request.data.get('external_trader_id'),
             source=request.data.get('source'),
@@ -46,7 +47,8 @@ class MasterTraderViewSet(viewsets.ModelViewSet):
         )
 
         # Serialize the MasterTrader instance and return it in the response
-        serializer = MasterTraderSerializer(master_trader)
+        master_trader.update_master_trader_signals(signals)
+        serializer = MasterTraderSerializer(master_trader, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -54,3 +56,8 @@ class MasterTraderRetrieveView(MultipleFieldLookupORMixin, generics.RetrieveAPIV
     queryset = models.MasterTrader.objects.all()
     serializer_class = serializers.MasterTraderSerializer
     lookup_fields = ['source', 'external_trader_id']
+
+
+class SignalViewSet(viewsets.ModelViewSet):
+    queryset = Signal.objects.all()
+    serializer_class = SignalSerializer

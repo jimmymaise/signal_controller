@@ -3,6 +3,7 @@ from django.db.models import Count
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db.models import Q
+from django.db import transaction
 
 SOURCE_CHOICES = (
     ('zulu', 'Zulu Trade'),
@@ -14,13 +15,70 @@ class MasterTrader(models.Model):
     external_trader_id = models.CharField(max_length=60)
     source = models.CharField(max_length=255, choices=SOURCE_CHOICES)
     is_active = models.BooleanField(default=True)
-    signals = models.JSONField()
 
     def __str__(self):
-        return self.external_trader_id
+        return f'{self.id}({self.external_trader_id}|{self.source})'
+
+    def update_master_trader_signals(self, updated_signal_list):
+        signal_list_from_db = Signal.objects.filter(trader_id=self.id).values('id',
+                                                                              'external_signal_id')
+        signal_dict_from_db = {signal['external_signal_id']: signal for signal in signal_list_from_db}
+
+        # Prepare data for bulk create/update/delete
+        to_create = []
+        to_update = []
+        for updated_signal in updated_signal_list:
+            updated_signal['trader_id'] = self.id
+            external_signal_id = updated_signal.get('external_signal_id')
+
+            if exist_signal := signal_dict_from_db.get(external_signal_id):
+                # Update existing employee
+                to_update.append(Signal(id=exist_signal['id'], **updated_signal))
+                del signal_dict_from_db[external_signal_id]
+            else:
+                # Create new employee
+                to_create.append(Signal(**updated_signal))
+
+        # Mark remaining employees for deletion
+        to_delete_ids = [signal['id'] for external_signal_id, signal in signal_dict_from_db.items()]
+
+        # Perform database updates within a transaction for consistency
+        with transaction.atomic():
+            # Delete employees marked for deletion
+            Signal.objects.filter(id__in=to_delete_ids).delete()
+
+            # Update existing employees
+            if to_update:
+                Signal.objects.bulk_update(to_update,
+                                           ['symbol', 'type', 'size', 'time', 'price_order', 'stop_loss', 'take_profit',
+                                            'market_price', 'limit'])
+
+            # Create new employees
+
+            Signal.objects.bulk_create(to_create)
 
     class Meta:
         unique_together = ("external_trader_id", "source")
+
+
+class Signal(models.Model):
+    trader = models.ForeignKey(MasterTrader, on_delete=models.CASCADE, related_name='signals')
+    external_signal_id = models.CharField(max_length=255)
+    symbol = models.CharField(max_length=255)
+    type = models.CharField(max_length=255)
+    size = models.FloatField()
+    time = models.DateTimeField()
+    price_order = models.FloatField()
+    stop_loss = models.FloatField()
+    take_profit = models.FloatField()
+    market_price = models.FloatField()
+
+    def __str__(self):
+        return f'{self.external_signal_id} (from {self.trader.external_trader_id}-{self.trader.source}|updated at {self.time})'
+
+
+class Meta:
+    unique_together = ("trader_id", "external_signal_id")
 
 
 class CrawlerType(models.Model):
@@ -40,10 +98,10 @@ class CrawlAssignment(models.Model):
     crawl_runner = models.ForeignKey(CrawlRunner, on_delete=models.CASCADE)
 
 
-@receiver(post_save, sender=MasterTrader)
-@receiver(post_save, sender=CrawlRunner)
-@receiver(post_delete, sender=MasterTrader)
-@receiver(post_delete, sender=CrawlRunner)
+# @receiver(post_save, sender=MasterTrader)
+# @receiver(post_save, sender=CrawlRunner)
+# @receiver(post_delete, sender=MasterTrader)
+# @receiver(post_delete, sender=CrawlRunner)
 def balance_runner_assignment_on_change(sender, **kwargs):
     balance_runner_assignment()
 
@@ -76,9 +134,9 @@ def balance_runner_assignment():
 
     # Get all active crawl_runners
     active_crawl_runners = CrawlRunner.objects.filter(is_active=True).annotate(
-        num_assignments=Count("assignments")
+        num_assignments=Count("crawlassignment")
     ).prefetch_related(
-        "assignments"
+        "crawlassignment"
     ).order_by("num_assignments")
 
     # Get the total number of active crawl_runners and active master_traders
