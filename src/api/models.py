@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from django.db.models import Q
 from django.db import transaction
 
-SOURCE_CHOICES = (("zulu", "Zulu Trade"),("exness", "Exness Trade"))
+SOURCE_CHOICES = (("zulu", "Zulu Trade"), ("exness", "Exness Trade"))
 
 
 class MasterTrader(models.Model):
@@ -136,9 +136,21 @@ class CrawlAssignment(models.Model):
 @receiver(post_save, sender=CrawlRunner)
 @receiver(post_delete, sender=MasterTrader)
 @receiver(post_delete, sender=CrawlRunner)
-def balance_runner_assignment_on_change(sender, **kwargs):
+def balance_runner_assignment_on_change(sender, instance, **kwargs):
     if "created" not in kwargs or kwargs["created"] == True or kwargs["update_fields"]:
-        balance_runner_assignment()
+
+        if isinstance(instance, MasterTrader):
+            source = instance.source
+
+        elif isinstance(instance, CrawlRunner):
+            source = instance.crawler_type.source
+
+        else:
+            # This should not happen as the sender is specified in the decorators
+            return print("Unknown sender")
+            
+        clean_up_assginments()
+        balance_runner_assignment(source)
 
 
 def assign_more_master_traders_to_a_crawl_runner(
@@ -160,7 +172,7 @@ def assign_more_master_traders_to_a_crawl_runner(
     )
 
 
-def balance_runner_assignment():
+def clean_up_assginments():
     # Un-assign inactive master_traders and inactive crawl_runners
     CrawlAssignment.objects.filter(
         Q(master_trader__is_active=False)
@@ -169,9 +181,11 @@ def balance_runner_assignment():
         | Q(crawl_runner__isnull=True)
     ).delete()
 
+
+def balance_runner_assignment(source):
     # Get all active crawl_runners
     active_crawl_runners = (
-        CrawlRunner.objects.filter(is_active=True)
+        CrawlRunner.objects.filter(is_active=True, crawler_type__source=source)
         .annotate(num_assignments=Count("assignments"))
         .prefetch_related("assignments")
         .order_by("-num_assignments")
@@ -181,7 +195,9 @@ def balance_runner_assignment():
     total_active_crawl_runners = active_crawl_runners.values_list(
         "id", flat=True
     ).count()
-    total_active_master_traders = MasterTrader.objects.filter(is_active=True).count()
+    total_active_master_traders = MasterTrader.objects.filter(
+        is_active=True, source=source
+    ).count()
 
     if not all([total_active_master_traders, total_active_crawl_runners]):
         return
