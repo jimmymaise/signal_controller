@@ -5,42 +5,45 @@ from django.dispatch import receiver
 from django.db.models import Q
 from django.db import transaction
 
-SOURCE_CHOICES = (
-    ('zulu', 'Zulu Trade'),
-)
+SOURCE_CHOICES = (("zulu", "Zulu Trade"),)
 
 
 class MasterTrader(models.Model):
-    name = models.CharField(max_length=255, default='default_name')
+    name = models.CharField(max_length=255, default="default_name")
     external_trader_id = models.CharField(max_length=60)
     source = models.CharField(max_length=255, choices=SOURCE_CHOICES)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f'{self.id}({self.external_trader_id}|{self.source})'
+        return f"{self.id}({self.external_trader_id}|{self.source})"
 
     def update_master_trader_signals(self, updated_signal_list):
-        signal_list_from_db = Signal.objects.filter(trader_id=self.id).values('id',
-                                                                              'external_signal_id')
-        signal_dict_from_db = {signal['external_signal_id']: signal for signal in signal_list_from_db}
+        signal_list_from_db = Signal.objects.filter(trader_id=self.id).values(
+            "id", "external_signal_id"
+        )
+        signal_dict_from_db = {
+            signal["external_signal_id"]: signal for signal in signal_list_from_db
+        }
 
         # Prepare data for bulk create/update/delete
         to_create = []
         to_update = []
         for updated_signal in updated_signal_list:
-            updated_signal['trader_id'] = self.id
-            external_signal_id = updated_signal.get('external_signal_id')
+            updated_signal["trader_id"] = self.id
+            external_signal_id = updated_signal.get("external_signal_id")
 
             if exist_signal := signal_dict_from_db.get(external_signal_id):
                 # Update existing employee
-                to_update.append(Signal(id=exist_signal['id'], **updated_signal))
+                to_update.append(Signal(id=exist_signal["id"], **updated_signal))
                 del signal_dict_from_db[external_signal_id]
             else:
                 # Create new employee
                 to_create.append(Signal(**updated_signal))
 
         # Mark remaining employees for deletion
-        to_delete_ids = [signal['id'] for external_signal_id, signal in signal_dict_from_db.items()]
+        to_delete_ids = [
+            signal["id"] for external_signal_id, signal in signal_dict_from_db.items()
+        ]
 
         # Perform database updates within a transaction for consistency
         with transaction.atomic():
@@ -49,9 +52,20 @@ class MasterTrader(models.Model):
 
             # Update existing employees
             if to_update:
-                Signal.objects.bulk_update(to_update,
-                                           ['symbol', 'type', 'size', 'time', 'price_order', 'stop_loss', 'take_profit',
-                                            'market_price', 'limit'])
+                Signal.objects.bulk_update(
+                    to_update,
+                    [
+                        "symbol",
+                        "type",
+                        "size",
+                        "time",
+                        "price_order",
+                        "stop_loss",
+                        "take_profit",
+                        "market_price",
+                        "limit",
+                    ],
+                )
 
             # Create new employees
 
@@ -62,7 +76,9 @@ class MasterTrader(models.Model):
 
 
 class Signal(models.Model):
-    trader = models.ForeignKey(MasterTrader, on_delete=models.CASCADE, related_name='signals')
+    trader = models.ForeignKey(
+        MasterTrader, on_delete=models.CASCADE, related_name="signals"
+    )
     external_signal_id = models.CharField(max_length=255)
     symbol = models.CharField(max_length=255)
     type = models.CharField(max_length=255)
@@ -74,51 +90,53 @@ class Signal(models.Model):
     market_price = models.FloatField()
 
     def __str__(self):
-        return f'{self.external_signal_id} (from {self.trader.external_trader_id}-{self.trader.source}|updated at {self.time})'
+        return f"{self.external_signal_id} (from {self.trader.external_trader_id}-{self.trader.source}|updated at {self.time})"
 
 
-class Meta:
-    unique_together = ("trader_id", "external_signal_id")
+    class Meta:
+        unique_together = ("trader", "external_signal_id")
 
 
 class CrawlerType(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True, primary_key=True)
     source = models.CharField(max_length=255, choices=SOURCE_CHOICES)
     is_active = models.BooleanField(default=True)
 
 
 class CrawlRunner(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     crawler_type = models.ForeignKey(CrawlerType, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
 
 
 class CrawlAssignment(models.Model):
     master_trader = models.ForeignKey(MasterTrader, on_delete=models.CASCADE)
-    crawl_runner = models.ForeignKey(CrawlRunner, on_delete=models.CASCADE)
+    crawl_runner = models.ForeignKey(
+        CrawlRunner, on_delete=models.CASCADE, related_name="assignments"
+    )
 
 
-# @receiver(post_save, sender=MasterTrader)
-# @receiver(post_save, sender=CrawlRunner)
-# @receiver(post_delete, sender=MasterTrader)
-# @receiver(post_delete, sender=CrawlRunner)
+@receiver(post_save, sender=MasterTrader)
+@receiver(post_save, sender=CrawlRunner)
+@receiver(post_delete, sender=MasterTrader)
+@receiver(post_delete, sender=CrawlRunner)
 def balance_runner_assignment_on_change(sender, **kwargs):
     balance_runner_assignment()
 
 
 def assign_more_master_traders_to_a_crawl_runner(
-        crawl_runner, num_additional_master_trader
+    crawl_runner, num_additional_master_trader
 ):
     unassigned_master_traders = MasterTrader.objects.filter(
-        is_active=True, crawl_assignment__isnull=True, source=crawl_runner.source
+        is_active=True, crawlassignment__isnull=True, source=crawl_runner.crawler_type.source
     )
 
     CrawlAssignment.objects.bulk_create(
         [
             CrawlAssignment(master_trader=master_trader, crawl_runner=crawl_runner)
             for master_trader in unassigned_master_traders[
-                                 :num_additional_master_trader
-                                 ]
+                :num_additional_master_trader
+            ]
         ]
     )
 
@@ -133,19 +151,22 @@ def balance_runner_assignment():
     ).update(crawl_runner=None)
 
     # Get all active crawl_runners
-    active_crawl_runners = CrawlRunner.objects.filter(is_active=True).annotate(
-        num_assignments=Count("crawlassignment")
-    ).prefetch_related(
-        "crawlassignment"
-    ).order_by("num_assignments")
+    active_crawl_runners = (
+        CrawlRunner.objects.filter(is_active=True)
+        .annotate(num_assignments=Count("assignments"))
+        .prefetch_related("assignments")
+        .order_by("num_assignments")
+    )
 
     # Get the total number of active crawl_runners and active master_traders
-    total_active_crawl_runners = active_crawl_runners.values_list('id', flat=True).count()
+    total_active_crawl_runners = active_crawl_runners.values_list(
+        "id", flat=True
+    ).count()
     total_active_master_traders = MasterTrader.objects.filter(is_active=True).count()
 
     # Calculate the target number of master_traders per active crawl_runner
     avg_master_traders_per_crawl_runner = (
-            total_active_master_traders // total_active_crawl_runners
+        total_active_master_traders // total_active_crawl_runners
     )
 
     # Calculate the number of remaining master_traders that need to be assigned to crawl_runners
@@ -155,16 +176,18 @@ def balance_runner_assignment():
     for crawl_runner in active_crawl_runners:
         # Calculate the number of additional master_traders that need to be assigned to this crawl_runner
         additional_master_traders = (
-                avg_master_traders_per_crawl_runner - crawl_runner.num_assignments
+            avg_master_traders_per_crawl_runner - crawl_runner.num_assignments
         )
         if remaining_master_traders > 0:
             additional_master_traders += 1
             remaining_master_traders -= 1
 
         if additional_master_traders < 0:
-            master_traders_to_unassigned = crawl_runner.crawl_assignment.all()[: abs(additional_master_traders)]
-            assignments_to_delete = list(master_traders_to_unassigned.values_list('id', flat=True))
-            CrawlAssignment.objects.filter(id__in=assignments_to_delete).bulk_delete()
+            assignment_to_delete = crawl_runner.assignments.all()[
+                : abs(additional_master_traders)
+            ]
+            assignment_ids_to_delete = [assignment.id for assignment in assignment_to_delete]
+            CrawlAssignment.objects.filter(id__in=assignment_ids_to_delete).delete()
 
         # Assign additional master_traders to this crawl_runner
         if additional_master_traders > 0:
