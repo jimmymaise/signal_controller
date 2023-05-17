@@ -4,6 +4,8 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db.models import Q
 from django.db import transaction
+from django.utils import timezone
+
 
 SOURCE_CHOICES = (("zulu", "Zulu Trade"), ("exness", "Exness Trade"))
 
@@ -82,7 +84,9 @@ class Signal(models.Model):
     symbol = models.CharField(max_length=30)
     type = models.CharField(max_length=255)
     size = models.FloatField()
-    time = models.DateTimeField()
+    time = models.DateTimeField(
+        default=timezone.now, null=True
+    )  # Set the default to current time
     price_order = models.FloatField()
     stop_loss = models.FloatField(null=True)
     take_profit = models.FloatField(null=True)
@@ -138,7 +142,6 @@ class CrawlAssignment(models.Model):
 @receiver(post_delete, sender=CrawlRunner)
 def balance_runner_assignment_on_change(sender, instance, **kwargs):
     if "created" not in kwargs or kwargs["created"] == True or kwargs["update_fields"]:
-
         if isinstance(instance, MasterTrader):
             source = instance.source
 
@@ -148,7 +151,7 @@ def balance_runner_assignment_on_change(sender, instance, **kwargs):
         else:
             # This should not happen as the sender is specified in the decorators
             return print("Unknown sender")
-            
+
         clean_up_assginments()
         balance_runner_assignment(source)
 

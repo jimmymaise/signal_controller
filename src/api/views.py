@@ -42,6 +42,20 @@ class MasterTraderViewSet(viewsets.ModelViewSet):
     queryset = MasterTrader.objects.all().order_by("id")
     serializer_class = MasterTraderSerializer
 
+    def get_queryset(self):
+        queryset = MasterTrader.objects.all().order_by("id")
+        source = self.request.query_params.get("source", None)
+        external_trader_ids = self.request.query_params.get("external_trader_ids", None)
+
+        if source is not None:
+            queryset = queryset.filter(source=source)
+
+        if external_trader_ids is not None:
+            id_list = external_trader_ids.split(",")
+            queryset = queryset.filter(external_trader_id__in=id_list)
+
+        return queryset
+
     def create(self, request, *args, **kwargs):
         # Create a new dictionary with only the fields defined in the serializer
         filtered_data = {
@@ -78,8 +92,8 @@ class CrawlRunnerViewSet(viewsets.ModelViewSet):
             for k, v in request.data.items()
             if k in CrawlRunnerSerializer.Meta.fields
         }
-        filtered_data['last_seen_at'] = datetime.datetime.now(tz=timezone.utc)
-        filtered_data['crawler_type_id'] = filtered_data.pop('crawler_type')
+        filtered_data["last_seen_at"] = datetime.datetime.now(tz=timezone.utc)
+        filtered_data["crawler_type_id"] = filtered_data.pop("crawler_type")
         if "assignments" in filtered_data:
             filtered_data.pop("assignments")
 

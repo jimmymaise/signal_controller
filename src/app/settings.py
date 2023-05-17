@@ -119,7 +119,7 @@ DB_NAME = os.getenv("DB_NAME", "myproject_db")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", 5432)
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(" ")
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:8000").split(" ")
 
 DATABASES = {
     "default": {
