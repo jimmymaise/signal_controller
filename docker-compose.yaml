@@ -14,7 +14,7 @@ services:
       - DJANGO_ENVIRONMENT=development
       - DB_PASSWORD=myproject_password181
       - DB_NAME=myproject_db
-      - DB_USER =myproject_user
+      - DB_USER =postgres
       - DB_HOST=db
       - DB_PORT= 5432
     depends_on:
@@ -29,7 +29,7 @@ services:
       - webservice
     environment:
       - POSTGRES_DB=myproject_db
-      - POSTGRES_USER=myproject_user
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=myproject_password181
 
 networks:
