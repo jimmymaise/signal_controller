@@ -11,6 +11,7 @@ python = "^3.11"
 django = "^4.1.7"
 djangorestframework = "^3.14.0"
 drf-yasg = "^1.21.5"
+django-admin-list-filter-dropdown = "^1.0.3"
 
 
 [tool.poetry.group.dev.dependencies]
