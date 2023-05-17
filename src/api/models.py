@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from django.db.models import Q
 from django.db import transaction
 
-SOURCE_CHOICES = (("zulu", "Zulu Trade"),)
+SOURCE_CHOICES = (("zulu", "Zulu Trade"),("exness", "Exness Trade"))
 
 
 class MasterTrader(models.Model):
@@ -79,14 +79,14 @@ class Signal(models.Model):
         MasterTrader, on_delete=models.CASCADE, related_name="signals"
     )
     external_signal_id = models.CharField(max_length=255)
-    symbol = models.CharField(max_length=255)
+    symbol = models.CharField(max_length=30)
     type = models.CharField(max_length=255)
     size = models.FloatField()
     time = models.DateTimeField()
     price_order = models.FloatField()
-    stop_loss = models.FloatField()
-    take_profit = models.FloatField()
-    market_price = models.FloatField()
+    stop_loss = models.FloatField(null=True)
+    take_profit = models.FloatField(null=True)
+    market_price = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

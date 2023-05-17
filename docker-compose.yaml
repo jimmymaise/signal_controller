@@ -3,7 +3,7 @@ version: '3'
 services:
   web:
     build: .
-    # command: poetry run gunicorn --bind 0.0.0.0:8000 src.wsgi:application
+    command: poetry run python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
