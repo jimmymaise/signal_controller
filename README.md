@@ -1,4 +1,4 @@
-# Trading Signal Controller: An Enterprise Solution for Managing Trading Signals
+# Trading Signal Controller: An Solution for Managing Trading Signals
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@
 
 ## Introduction
 
-Trading Signal Controller is a professional-grade application for managing trading signals. Built on Django, the system aims to streamline the handling of trading signals across both development and production settings.
+Trading Signal Controller is an application for managing trading signals. Built on Django, the system aims to streamline the handling of trading signals across both development and production settings.
 
 ## Prerequisites
 
