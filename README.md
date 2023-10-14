@@ -1,100 +1,97 @@
-# Signal Controller: Trading Signal Management System
+# Trading Signal Controller: An Enterprise Solution for Managing Trading Signals
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Requirements](#requirements)
-3. [Getting Started](#getting-started)
-   - [Standard Installation](#standard-installation)
-   - [Docker Deployment](#docker-deployment)
-4. [Technologies](#technologies)
-5. [Codebase Summary](#codebase-summary)
-6. [Key Functionalities](#key-functionalities)
-   - [Crawl Assignment](#crawl-assignment)
-7. [Contribution Guidelines](#contribution-guidelines)
-8. [License](#license)
+1. [Introduction](#introduction)
+2. [Prerequisites](#prerequisites)
+3. [Quick Start](#quick-start)
+   - [Conventional Installation](#conventional-installation)
+   - [Docker Setup](#docker-setup)
+4. [Built With](#built-with)
+5. [Project Structure](#project-structure)
+6. [Core Features](#core-features)
+   - [Balancer for Assignment](#balancer-for-assignment)
+7. [How to Contribute](#how-to-contribute)
+8. [Licensing](#licensing)
 
-## Overview
+## Introduction
 
-Signal Controller is an enterprise-level trading signal management application. Developed on the Django framework, this system is designed to facilitate the effective management and control of trading signals in both development and testing environments.
+Trading Signal Controller is a professional-grade application for managing trading signals. Built on Django, the system aims to streamline the handling of trading signals across both development and production settings.
 
-## Requirements
+## Prerequisites
 
-- **Python**: v3.11
-- **Django**: v4.1.7
+- **Python**: Version 3.11
+- **Django**: Version 4.1.7
 - **Database**: PostgreSQL
 
-## Getting Started
+## Quick Start
 
-### Standard Installation
+### Conventional Installation
 
-1. **Clone the Repository**
+1. **Clone the Git Repo**
     ```bash
-    git clone <repository_url>
+    git clone <repository_link>
     ```
-2. **Install Required Packages**
+2. **Install Dependencies**
     ```bash
     poetry install
     ```
-3. **Database Migration**
+3. **Migrate the Database**
     ```bash
     poetry run python manage.py migrate
     ```
-4. **Launch Development Server**
+4. **Start the Dev Server**
     ```bash
     poetry run python manage.py runserver
     ```
 
-### Docker Deployment
+### Docker Setup
 
-Navigate to the project's root directory:
+Navigate to the root folder of the project:
 
-1. **Build Docker Image**
+1. **Create Docker Image**
     ```bash
-    docker build -t signal_controller .
+    docker build -t trading_signal_controller .
     ```
-2. **Run Docker Container**
+2. **Initiate Docker Container**
     ```bash
-    docker run -p 8000:8000 signal_controller
+    docker run -p 8000:8000 trading_signal_controller
     ```
 
-## Technologies
+## Built With
 
-- **Framework**: Django
-- **API Toolkit**: Django REST Framework
+- **Web Framework**: Django
+- **RESTful API**: Django REST Framework
 
-## Codebase Summary
+## Project Structure
 
-- **`pyproject.toml`**: Manages project metadata and dependencies, specifying Python version, Django, Django REST Framework, and other essential libraries.
-- **`Dockerfile`**: Configures the Python environment, manages dependencies, and initiates the application using Gunicorn.
-- **`nginx.conf`**: Establishes an Nginx reverse proxy and serves static and media files.
-- **`docker-compose.yaml`**: Orchestrates a multi-container Docker application, managing database, web server, and Nginx instances.
-- **`wsgi.py` & `asgi.py`**: Configure WSGI and ASGI servers for deployment.
-- **`models.py`**: Defines data models, including the `MasterTrader` entity.
+- **`pyproject.toml`**: Manages package metadata and dependencies.
+- **`Dockerfile`**: Sets up the Python runtime, handles dependencies, and starts the app with Gunicorn.
+- **`nginx.conf`**: Configures Nginx as a reverse proxy and serves static files.
+- **`docker-compose.yaml`**: Manages multi-container Docker applications.
+- **`wsgi.py` & `asgi.py`**: Set up WSGI and ASGI servers for deployment.
+- **`models.py`**: Houses data models like `MasterTrader`.
 
-## Key Functionalities
+## Core Features
 
-### Crawl Assignment
+### Balancer for Assignment
 
-#### Overview
+#### Introduction
 
-The `balance_runner_assignment` function in `src/api/models.py` is responsible for balancing the distribution of `MasterTrader` instances among active `CrawlRunner` instances. This ensures that no single `CrawlRunner` is overwhelmed with too many `MasterTrader` instances.
+The function `balance_runner_assignment` in `src/api/models.py` balances the allocation of `MasterTrader` instances across active `CrawlRunner` instances to prevent any one from being overloaded.
 
-#### Algorithm
+#### Implementation Steps
 
-The algorithm follows these steps:
+1. **Fetch Active Instances**: Enumerates all active `CrawlRunner` and `MasterTrader` instances.
+2. **Calculate Metrics**: Finds total and average `MasterTrader` instances for each `CrawlRunner`.
+3. **Early Exit Check**: Exits the function if no active instances are found.
+4. **Average Computation**: Evaluates the average `MasterTrader` instances for each `CrawlRunner`.
+5. **Identify Pending Assignments**: Determines any remaining `MasterTrader` instances that need to be assigned.
 
-1. **Retrieve Active Instances**: Lists all active `CrawlRunner` and `MasterTrader` instances.
-2. **Calculate Instance Metrics**: Computes the total and average number of `MasterTrader` instances per `CrawlRunner`.
-3. **Perform Early Exit Check**: If there are no active instances, the function exits early.
-4. **Compute Averages**: Calculates the average number of `MasterTrader` instances per `CrawlRunner`.
-5. **Determine Remaining Assignments**: Finds out how many more `MasterTrader` instances need to be allocated.
+## How to Contribute
 
+For a detailed guide on contributing to this project, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-# Contribution Guidelines
+## Licensing
 
-For guidelines on how to contribute to this project, please refer to [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-This software is licensed under the MIT License. For more information, see [LICENSE.md](LICENSE.md).
+The software is distributed under the MIT License. For additional details, refer to [LICENSE.md](LICENSE.md).
